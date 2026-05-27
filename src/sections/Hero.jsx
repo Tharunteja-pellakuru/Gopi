@@ -1,7 +1,8 @@
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
-import { Play, MessageSquare, ArrowDown, Heart, Share2, Bookmark, Music2, ChevronUp } from 'lucide-react';
+import { Play, MessageSquare, ArrowDown, Heart, Share2, Bookmark, Music2, ChevronUp, Volume2, VolumeX } from 'lucide-react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Magnet from '../components/Magnet';
+import shortVideo1 from '../assets/short-videos/Short-Video-1.mp4';
 
 const reels = [
   {
@@ -10,7 +11,7 @@ const reels = [
     category: 'BEATS & CUTS',
     views: '2.1M',
     likes: '48.3K',
-    video: 'https://player.vimeo.com/external/435674703.sd.mp4?s=7fdf2d061c569ff493b8655097bc8a7f14b62dbb&profile_id=165&oauth2_token_id=57447761',
+    video: shortVideo1,
     color: '#16a34a',
     tag: '#musicsync',
   },
@@ -37,7 +38,7 @@ const reels = [
 ];
 
 /* ─── Reel Card ───────────────────────────────────────────── */
-function ReelCard({ reel, active, onSwipeUp, onSwipeDown }) {
+function ReelCard({ reel, active, inView, onSwipeUp, onSwipeDown }) {
   const videoRef = useRef(null);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -46,17 +47,26 @@ function ReelCard({ reel, active, onSwipeUp, onSwipeDown }) {
   const opacity = useTransform(y, [-120, 0, 120], [0, 1, 0]);
   const dragStartY = useRef(0);
 
-  /* play / pause based on active */
+  const [isMuted, setIsMuted] = useState(false);
+
+  /* play / pause based on active & inView */
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
-    if (active) {
+    if (active && inView) {
       vid.currentTime = 0;
-      vid.play().catch(() => {});
+      vid.muted = false;
+      setIsMuted(false);
+      vid.play().catch(() => {
+        /* Browser blocked unmuted autoplay — fall back to muted */
+        vid.muted = true;
+        setIsMuted(true);
+        vid.play().catch(() => {});
+      });
     } else {
       vid.pause();
     }
-  }, [active]);
+  }, [active, inView]);
 
   const handleLike = () => {
     setLiked(v => !v);
@@ -85,7 +95,6 @@ function ReelCard({ reel, active, onSwipeUp, onSwipeDown }) {
         ref={videoRef}
         className="w-full h-full object-cover"
         loop
-        muted
         playsInline
         preload="metadata"
       >
@@ -139,6 +148,21 @@ function ReelCard({ reel, active, onSwipeUp, onSwipeDown }) {
           </span>
         </button>
 
+        {/* Mute Toggle */}
+        <button
+          className="flex flex-col items-center gap-1 cursor-none"
+          onClick={() => {
+            const vid = videoRef.current;
+            if (vid) {
+              vid.muted = !vid.muted;
+              setIsMuted(vid.muted);
+            }
+          }}
+        >
+          {isMuted ? <VolumeX size={20} className="text-white" /> : <Volume2 size={20} className="text-white" />}
+          <span className="text-white/80 font-mono text-[9px]">{isMuted ? 'Muted' : 'Audio'}</span>
+        </button>
+
         {/* Share */}
         <button className="flex flex-col items-center gap-1 cursor-none">
           <Share2 size={20} className="text-white" />
@@ -186,7 +210,7 @@ function ReelCard({ reel, active, onSwipeUp, onSwipeDown }) {
 }
 
 /* ─── Swipeable Reel Stack ────────────────────────────────── */
-function ReelStack() {
+function ReelStack({ inView }) {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0); // -1 up, 1 down
 
@@ -234,6 +258,7 @@ function ReelStack() {
             <ReelCard
               reel={reels[current]}
               active={true}
+              inView={inView}
               onSwipeUp={goNext}
               onSwipeDown={goPrev}
             />
@@ -292,6 +317,19 @@ function ReelStack() {
 
 /* ─── Hero Section ────────────────────────────────────────── */
 export default function Hero() {
+  const [inView, setInView] = useState(true);
+  const sectionRef = useRef(null);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      setInView(entry.isIntersecting);
+    }, { threshold: 0.1 });
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
   const handleScrollTo = (e, href) => {
     e.preventDefault();
     const targetElement = document.querySelector(href);
@@ -302,6 +340,7 @@ export default function Hero() {
 
   return (
     <section
+      ref={sectionRef}
       id="home"
       className="relative min-h-screen w-full flex items-center justify-center overflow-hidden pt-28 pb-16 md:py-0 select-none bg-white"
     >
