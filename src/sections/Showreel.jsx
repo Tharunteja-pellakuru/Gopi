@@ -40,7 +40,10 @@ export default function Showreel() {
           playlist: YT_VIDEO_ID,
           rel:      0,
           modestbranding: 1,
-          controls: 1,
+          controls: 0,       // hide YouTube control bar
+          disablekb: 1,      // disable keyboard shortcuts on iframe
+          iv_load_policy: 3, // hide annotations
+          fs: 0,             // disable fullscreen button (hidden with controls)
         },
         events: {
           onReady: (e) => {
@@ -69,7 +72,7 @@ export default function Showreel() {
       } else {
         try { p.pauseVideo(); } catch (_) {}
       }
-    }, { threshold: 0.3 });
+    }, { threshold: 0.5, rootMargin: '-35% 0px -35% 0px' });
 
     if (section) observer.observe(section);
 
