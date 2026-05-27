@@ -3,78 +3,81 @@ import { motion } from 'framer-motion';
 
 const YT_VIDEO_ID = '5JBKlur485k';
 
-/* Load the YouTube IFrame API script once */
 function loadYTScript() {
   if (window.YT && window.YT.Player) return Promise.resolve();
   return new Promise((resolve) => {
-    const existing = document.getElementById('yt-iframe-api');
-    if (existing) {
-      // Script already injected — wait for it
-      window.onYouTubeIframeAPIReady = resolve;
+    if (document.getElementById('yt-iframe-api')) {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { prev?.(); resolve(); };
       return;
     }
     window.onYouTubeIframeAPIReady = resolve;
-    const script = document.createElement('script');
-    script.id  = 'yt-iframe-api';
-    script.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(script);
+    const s = document.createElement('script');
+    s.id = 'yt-iframe-api';
+    s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
   });
 }
 
 export default function Showreel() {
-  const sectionRef  = useRef(null);
-  const playerRef   = useRef(null);   // YT.Player instance
-  const divRef      = useRef(null);   // target div for YT.Player
+  const sectionRef   = useRef(null);
+  const playerRef    = useRef(null);
+  const divRef       = useRef(null);
+  const shouldPlay   = useRef(false);  // tracks whether section is in view
 
   useEffect(() => {
     let player = null;
 
+    /* ── Start playing + unmute helper ─────────── */
+    const startPlay = () => {
+      const p = playerRef.current;
+      if (!p) return;
+      p.playVideo();
+      setTimeout(() => {
+        try { p.unMute(); p.setVolume(80); } catch (_) {}
+      }, 600);
+    };
+
+    /* ── IntersectionObserver ────────────────────
+       Fires when the player card is vertically centered
+       (within the middle ~40% of the viewport).         */
+    const observer = new IntersectionObserver(([entry]) => {
+      shouldPlay.current = entry.isIntersecting;
+      const p = playerRef.current;
+      if (!p) return;                 // player not ready yet — flag is set
+      if (entry.isIntersecting) {
+        startPlay();
+      } else {
+        try { p.pauseVideo(); p.mute(); } catch (_) {}
+      }
+    }, { threshold: 0.5, rootMargin: '-20% 0px -20% 0px' });
+
+    if (sectionRef.current) observer.observe(sectionRef.current);
+
+    /* ── Load YT API then create player ────────── */
     loadYTScript().then(() => {
-      /* Create the player — start muted so autoplay is never blocked */
       player = new window.YT.Player(divRef.current, {
         videoId: YT_VIDEO_ID,
         playerVars: {
-          autoplay: 0,       // we'll call playVideo() manually on scroll
-          mute:     1,       // must be muted initially for policy
-          loop:     1,
-          playlist: YT_VIDEO_ID,
-          rel:      0,
-          modestbranding: 1,
-          controls: 0,       // hide YouTube control bar
-          disablekb: 1,      // disable keyboard shortcuts on iframe
-          iv_load_policy: 3, // hide annotations
-          fs: 0,             // disable fullscreen button (hidden with controls)
+          autoplay:      0,
+          mute:          1,   // start muted for autoplay policy
+          loop:          1,
+          playlist:      YT_VIDEO_ID,
+          rel:           0,
+          modestbranding:1,
+          controls:      0,   // hide control bar
+          disablekb:     1,
+          iv_load_policy:3,
         },
         events: {
-          onReady: (e) => {
+          onReady(e) {
             playerRef.current = e.target;
+            /* If section was already scrolled into view before player loaded */
+            if (shouldPlay.current) startPlay();
           },
         },
       });
     });
-
-    /* IntersectionObserver: play + unmute when section in view */
-    const section = sectionRef.current;
-    const observer = new IntersectionObserver(([entry]) => {
-      const p = playerRef.current;
-      if (!p) return;
-      if (entry.isIntersecting) {
-        p.playVideo();
-        /* Small delay so YouTube has time to start streaming,
-           then unmute — this satisfies browser autoplay policy
-           because the video is already playing (muted) first */
-        setTimeout(() => {
-          try {
-            p.unMute();
-            p.setVolume(80);
-          } catch (_) {}
-        }, 800);
-      } else {
-        try { p.pauseVideo(); } catch (_) {}
-      }
-    }, { threshold: 0.5, rootMargin: '-35% 0px -35% 0px' });
-
-    if (section) observer.observe(section);
 
     return () => {
       observer.disconnect();
@@ -93,7 +96,7 @@ export default function Showreel() {
 
       <div className="max-w-7xl w-full relative z-10 flex flex-col items-center">
 
-        {/* ── Section heading ── */}
+        {/* Heading */}
         <div className="text-center mb-16">
           <span className="font-mono text-xs text-green-600 uppercase tracking-widest block mb-3 font-semibold">
             Featured Reel
@@ -106,7 +109,7 @@ export default function Showreel() {
           </p>
         </div>
 
-        {/* ── YouTube Player Card ── */}
+        {/* Player card */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -115,11 +118,10 @@ export default function Showreel() {
           className="w-full max-w-5xl rounded-3xl overflow-hidden border border-slate-200/80 bg-slate-950 shadow-2xl shadow-slate-200/60 relative"
           style={{ aspectRatio: '16/9' }}
         >
-          {/* YT.Player mounts here */}
           <div ref={divRef} className="w-full h-full" />
         </motion.div>
 
-        {/* ── Bottom meta strip ── */}
+        {/* Meta strip */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
