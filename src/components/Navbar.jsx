@@ -61,7 +61,7 @@ export default function Navbar() {
           >
             {/* Brand Name */}
             <span className="font-clash text-3xl md:text-4xl font-bold tracking-tight text-slate-900 group-hover:text-green-600 transition-colors duration-300">
-              GOPI<span className="text-green-600 group-hover:text-green-500 transition-colors">.</span>
+              GOP<span className="text-green-600 group-hover:text-green-500 transition-colors">I</span>
             </span>
           </a>
 
