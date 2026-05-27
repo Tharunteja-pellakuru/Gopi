@@ -3,6 +3,7 @@ import { Play, MessageSquare, ArrowDown, Heart, Share2, Bookmark, Music2, Chevro
 import { useState, useRef, useCallback, useEffect } from 'react';
 import Magnet from '../components/Magnet';
 import shortVideo1 from '../assets/short-videos/Short-Video-1.mp4';
+import profilePic from '../assets/Gopi.png';
 
 const reels = [
   {
@@ -370,17 +371,24 @@ export default function Hero() {
         {/* Left: Typography */}
         <div className="lg:col-span-7 flex flex-col justify-center text-left">
 
-          {/* Tagline */}
+          {/* Tagline & Avatar */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 mb-6"
+            className="flex items-center gap-4 mb-6"
           >
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-            <span className="font-mono text-xs text-zinc-500 uppercase tracking-widest">
-              Available For Custom Projects
-            </span>
+            <img 
+              src={profilePic} 
+              alt="Gopi Profile" 
+              className="w-12 h-12 rounded-full object-cover border-2 border-green-500 shadow-lg shadow-green-500/20"
+            />
+            <div className="inline-flex items-center gap-2 bg-zinc-100 px-3 py-1.5 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+              <span className="font-mono text-[10px] md:text-xs text-zinc-600 uppercase tracking-widest font-semibold">
+                Available For Custom Projects
+              </span>
+            </div>
           </motion.div>
 
           {/* Main Title */}
