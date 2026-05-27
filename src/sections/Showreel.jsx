@@ -41,7 +41,7 @@ export default function Showreel() {
 
   /* ── preview card state ─────────────────────────── */
   const [previewPlaying, setPreviewPlaying] = useState(false);
-  const [previewMuted,   setPreviewMuted]   = useState(true);
+  const [previewMuted,   setPreviewMuted]   = useState(false);
   const [previewSpeed,   setPreviewSpeed]   = useState(0);   // index into SPEEDS
   const [showFlash,      setShowFlash]      = useState(false);
   const [flashPlaying,   setFlashPlaying]   = useState(false);
@@ -49,18 +49,23 @@ export default function Showreel() {
   const previewVideoRef = useRef(null);
   const modalVideoRef   = useRef(null);
   const sectionRef      = useRef(null);
+  const isInView        = useRef(false);
 
   /* ══════════════════════════════════════════════════
      PREVIEW VIDEO CONTROLS
   ══════════════════════════════════════════════════ */
 
-  /* Fix React muted prop bug — set muted as DOM property on mount */
+  /* On mount: try unmuted autoplay first; fall back to muted if browser blocks */
   useEffect(() => {
     const vid = previewVideoRef.current;
-    if (vid) {
+    if (!vid) return;
+    vid.muted = false;
+    vid.play().catch(() => {
+      /* Browser blocked unmuted autoplay — fall back to muted */
       vid.muted = true;
+      setPreviewMuted(true);
       vid.play().catch(() => {});
-    }
+    });
   }, []);
 
   /* Auto-play + unmute when section scrolls ≥50% into view */
@@ -70,15 +75,16 @@ export default function Showreel() {
     const observer = new IntersectionObserver(([entry]) => {
       const vid = previewVideoRef.current;
       if (!vid) return;
+      isInView.current = entry.isIntersecting;
       if (entry.isIntersecting) {
-        /* Try unmuted play first; fall back to muted play */
         vid.muted = false;
+        setPreviewMuted(false);
         vid.play().catch(() => {
+          /* If unmuted play is blocked, fall back to muted */
           vid.muted = true;
           setPreviewMuted(true);
           vid.play().catch(() => {});
         });
-        setPreviewMuted(false);
       } else {
         vid.muted = true;
         setPreviewMuted(true);
@@ -234,7 +240,6 @@ export default function Showreel() {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
             autoPlay
             loop
-            muted
             playsInline
             onPlay={() => setPreviewPlaying(true)}
             onPause={() => setPreviewPlaying(false)}
@@ -317,81 +322,71 @@ export default function Showreel() {
             )}
           </AnimatePresence>
 
-          {/* ── Floating control bar — slides up on hover (always rendered when playing) ── */}
-          <AnimatePresence>
-            {previewPlaying && (
-              <motion.div
-                key="controls"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 0, y: 0 }}
-                exit={{ opacity: 0, y: 16 }}
-                whileHover={{ opacity: 1 }}    /* parent card hover triggers this via CSS group below */
-                transition={{ duration: 0.3 }}
-                /* We use a CSS trick: the group-hover on the card makes this visible */
-                className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30
-                           opacity-0 group-hover:opacity-100
-                           translate-y-2 group-hover:translate-y-0
-                           transition-all duration-300
-                           flex items-center gap-4 px-5 py-3 rounded-2xl
-                           bg-black/65 backdrop-blur-xl border border-white/10 shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Play / Pause */}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
-                  title={previewPlaying ? 'Pause' : 'Play'}
-                  className="flex flex-col items-center gap-0.5 text-white/80 hover:text-white transition-colors cursor-none"
-                >
-                  {previewPlaying
-                    ? <Pause size={18} fill="currentColor" />
-                    : <Play  size={18} fill="currentColor" />}
-                  <span className="font-mono text-[8px] tracking-wider">
-                    {previewPlaying ? 'PAUSE' : 'PLAY'}
-                  </span>
-                </button>
+          {/* ── Floating control bar — always visible on hover via CSS ── */}
+          <div
+            className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30
+                       opacity-0 group-hover:opacity-100
+                       translate-y-3 group-hover:translate-y-0
+                       pointer-events-none group-hover:pointer-events-auto
+                       transition-all duration-300 ease-out
+                       flex items-center gap-4 px-5 py-3 rounded-2xl
+                       bg-black/65 backdrop-blur-xl border border-white/10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Play / Pause */}
+            <button
+              onClick={(e) => { e.stopPropagation(); handleCardClick(); }}
+              title={previewPlaying ? 'Pause' : 'Play'}
+              className="flex flex-col items-center gap-0.5 text-white/80 hover:text-white transition-colors cursor-none"
+            >
+              {previewPlaying
+                ? <Pause size={18} fill="currentColor" />
+                : <Play  size={18} fill="currentColor" />}
+              <span className="font-mono text-[8px] tracking-wider">
+                {previewPlaying ? 'PAUSE' : 'PLAY'}
+              </span>
+            </button>
 
-                <div className="w-px h-6 bg-white/20" />
+            <div className="w-px h-6 bg-white/20" />
 
-                {/* Mute */}
-                <button
-                  onClick={togglePreviewMute}
-                  title={previewMuted ? 'Unmute' : 'Mute'}
-                  className="flex flex-col items-center gap-0.5 text-white/80 hover:text-white transition-colors cursor-none"
-                >
-                  {previewMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-                  <span className="font-mono text-[8px] tracking-wider">
-                    {previewMuted ? 'MUTED' : 'AUDIO'}
-                  </span>
-                </button>
+            {/* Mute */}
+            <button
+              onClick={togglePreviewMute}
+              title={previewMuted ? 'Unmute' : 'Mute'}
+              className="flex flex-col items-center gap-0.5 text-white/80 hover:text-white transition-colors cursor-none"
+            >
+              {previewMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              <span className="font-mono text-[8px] tracking-wider">
+                {previewMuted ? 'MUTED' : 'AUDIO'}
+              </span>
+            </button>
 
-                <div className="w-px h-6 bg-white/20" />
+            <div className="w-px h-6 bg-white/20" />
 
-                {/* Speed */}
-                <button
-                  onClick={cyclePreviewSpeed}
-                  title="Cycle playback speed"
-                  className="flex flex-col items-center gap-0.5 text-white/80 hover:text-white transition-colors cursor-none"
-                >
-                  <Gauge size={18} />
-                  <span className="font-mono text-[8px] tracking-wider">
-                    {SPEEDS[previewSpeed]}×
-                  </span>
-                </button>
+            {/* Speed */}
+            <button
+              onClick={cyclePreviewSpeed}
+              title="Cycle playback speed"
+              className="flex flex-col items-center gap-0.5 text-white/80 hover:text-white transition-colors cursor-none"
+            >
+              <Gauge size={18} />
+              <span className="font-mono text-[8px] tracking-wider">
+                {SPEEDS[previewSpeed]}×
+              </span>
+            </button>
 
-                <div className="w-px h-6 bg-white/20" />
+            <div className="w-px h-6 bg-white/20" />
 
-                {/* Fullscreen */}
-                <button
-                  onClick={handlePreviewFullscreen}
-                  title="Fullscreen"
-                  className="flex flex-col items-center gap-0.5 text-white/80 hover:text-white transition-colors cursor-none"
-                >
-                  <Maximize2 size={18} />
-                  <span className="font-mono text-[8px] tracking-wider">FULL</span>
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            {/* Fullscreen */}
+            <button
+              onClick={handlePreviewFullscreen}
+              title="Fullscreen"
+              className="flex flex-col items-center gap-0.5 text-white/80 hover:text-white transition-colors cursor-none"
+            >
+              <Maximize2 size={18} />
+              <span className="font-mono text-[8px] tracking-wider">FULL</span>
+            </button>
+          </div>
         </motion.div>
       </div>
 
