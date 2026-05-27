@@ -1,5 +1,6 @@
-import { useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useRef, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Volume2, VolumeX } from 'lucide-react';
 
 const YT_VIDEO_ID = '5JBKlur485k';
 
@@ -20,69 +21,71 @@ function loadYTScript() {
 }
 
 export default function Showreel() {
-  const sectionRef   = useRef(null);
-  const playerRef    = useRef(null);
-  const divRef       = useRef(null);
-  const shouldPlay   = useRef(false);  // tracks whether section is in view
+  const sectionRef = useRef(null);
+  const playerRef  = useRef(null);
+  const divRef     = useRef(null);
+  const shouldPlay = useRef(false);
+  const [isMuted, setIsMuted] = useState(true);   // start muted for autoplay
+  const [playerReady, setPlayerReady] = useState(false);
+
+  /* ── Toggle mute — requires user gesture so always works ── */
+  const toggleMute = () => {
+    const p = playerRef.current;
+    if (!p) return;
+    if (isMuted) {
+      p.unMute();
+      p.setVolume(90);
+      setIsMuted(false);
+    } else {
+      p.mute();
+      setIsMuted(true);
+    }
+  };
 
   useEffect(() => {
-    let player = null;
-
-    /* ── Start playing + unmute helper ─────────── */
     const startPlay = () => {
       const p = playerRef.current;
       if (!p) return;
       p.playVideo();
-      setTimeout(() => {
-        try { p.unMute(); p.setVolume(80); } catch (_) {}
-      }, 600);
+      // Keep muted — user must click to unmute (browser policy)
     };
 
-    /* ── IntersectionObserver ────────────────────
-       Fires when the player card is vertically centered
-       (within the middle ~40% of the viewport).         */
+    /* Observer fires when card is roughly centered in viewport */
     const observer = new IntersectionObserver(([entry]) => {
       shouldPlay.current = entry.isIntersecting;
       const p = playerRef.current;
-      if (!p) return;                 // player not ready yet — flag is set
-      if (entry.isIntersecting) {
-        startPlay();
-      } else {
-        try { p.pauseVideo(); p.mute(); } catch (_) {}
-      }
+      if (!p) return;
+      if (entry.isIntersecting) { startPlay(); }
+      else { try { p.pauseVideo(); } catch (_) {} }
     }, { threshold: 0.5, rootMargin: '-20% 0px -20% 0px' });
 
     if (sectionRef.current) observer.observe(sectionRef.current);
 
-    /* ── Load YT API then create player ────────── */
     loadYTScript().then(() => {
-      player = new window.YT.Player(divRef.current, {
+      new window.YT.Player(divRef.current, {
         videoId: YT_VIDEO_ID,
         playerVars: {
-          autoplay:      0,
-          mute:          1,   // start muted for autoplay policy
-          loop:          1,
-          playlist:      YT_VIDEO_ID,
-          rel:           0,
-          modestbranding:1,
-          controls:      0,   // hide control bar
-          disablekb:     1,
-          iv_load_policy:3,
+          autoplay:       0,
+          mute:           1,
+          loop:           1,
+          playlist:       YT_VIDEO_ID,
+          rel:            0,
+          modestbranding: 1,
+          controls:       0,
+          disablekb:      1,
+          iv_load_policy: 3,
         },
         events: {
           onReady(e) {
             playerRef.current = e.target;
-            /* If section was already scrolled into view before player loaded */
+            setPlayerReady(true);
             if (shouldPlay.current) startPlay();
           },
         },
       });
     });
 
-    return () => {
-      observer.disconnect();
-      try { player?.destroy(); } catch (_) {}
-    };
+    return () => observer.disconnect();
   }, []);
 
   return (
@@ -118,7 +121,38 @@ export default function Showreel() {
           className="w-full max-w-5xl rounded-3xl overflow-hidden border border-slate-200/80 bg-slate-950 shadow-2xl shadow-slate-200/60 relative"
           style={{ aspectRatio: '16/9' }}
         >
+          {/* YT player target */}
           <div ref={divRef} className="w-full h-full" />
+
+          {/* ── Mute / Unmute button overlay ── */}
+          <AnimatePresence>
+            {playerReady && (
+              <motion.button
+                key="mute-btn"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+                onClick={toggleMute}
+                className="absolute bottom-5 right-5 z-20 flex items-center gap-2 px-4 py-2 rounded-full
+                           bg-black/60 backdrop-blur-md border border-white/15 text-white
+                           hover:bg-green-600 hover:border-green-600
+                           transition-all duration-200 cursor-pointer shadow-lg"
+              >
+                {isMuted ? (
+                  <>
+                    <VolumeX size={16} />
+                    <span className="font-mono text-[10px] tracking-widest uppercase">Click to Unmute</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 size={16} />
+                    <span className="font-mono text-[10px] tracking-widest uppercase">Mute</span>
+                  </>
+                )}
+              </motion.button>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Meta strip */}
