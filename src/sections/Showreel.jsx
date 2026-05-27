@@ -1,39 +1,83 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const YT_VIDEO_ID = '5JBKlur485k';
 
+/* Load the YouTube IFrame API script once */
+function loadYTScript() {
+  if (window.YT && window.YT.Player) return Promise.resolve();
+  return new Promise((resolve) => {
+    const existing = document.getElementById('yt-iframe-api');
+    if (existing) {
+      // Script already injected — wait for it
+      window.onYouTubeIframeAPIReady = resolve;
+      return;
+    }
+    window.onYouTubeIframeAPIReady = resolve;
+    const script = document.createElement('script');
+    script.id  = 'yt-iframe-api';
+    script.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(script);
+  });
+}
+
 export default function Showreel() {
   const sectionRef  = useRef(null);
-  const iframeRef   = useRef(null);
-  const [ready, setReady] = useState(false);
+  const playerRef   = useRef(null);   // YT.Player instance
+  const divRef      = useRef(null);   // target div for YT.Player
 
-  /* ── Reveal the iframe only after section enters view (avoids
-        invisible autoplay being blocked before user scrolls here) ── */
   useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setReady(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.2 });
-    observer.observe(section);
-    return () => observer.disconnect();
-  }, []);
+    let player = null;
 
-  /* YouTube embed URL params:
-       autoplay=1       – start playing when loaded
-       mute=0           – unmuted by default
-       rel=0            – no related videos at end
-       modestbranding=1 – minimal YouTube branding
-       controls=1       – show YT native controls
-       loop=1           – loop the video
-       playlist=ID      – required for loop to work with embed
-  */
-  const embedSrc = `https://www.youtube.com/embed/${YT_VIDEO_ID}` +
-    `?autoplay=1&mute=0&rel=0&modestbranding=1&controls=1&loop=1&playlist=${YT_VIDEO_ID}&enablejsapi=1`;
+    loadYTScript().then(() => {
+      /* Create the player — start muted so autoplay is never blocked */
+      player = new window.YT.Player(divRef.current, {
+        videoId: YT_VIDEO_ID,
+        playerVars: {
+          autoplay: 0,       // we'll call playVideo() manually on scroll
+          mute:     1,       // must be muted initially for policy
+          loop:     1,
+          playlist: YT_VIDEO_ID,
+          rel:      0,
+          modestbranding: 1,
+          controls: 1,
+        },
+        events: {
+          onReady: (e) => {
+            playerRef.current = e.target;
+          },
+        },
+      });
+    });
+
+    /* IntersectionObserver: play + unmute when section in view */
+    const section = sectionRef.current;
+    const observer = new IntersectionObserver(([entry]) => {
+      const p = playerRef.current;
+      if (!p) return;
+      if (entry.isIntersecting) {
+        p.playVideo();
+        /* Small delay so YouTube has time to start streaming,
+           then unmute — this satisfies browser autoplay policy
+           because the video is already playing (muted) first */
+        setTimeout(() => {
+          try {
+            p.unMute();
+            p.setVolume(80);
+          } catch (_) {}
+        }, 800);
+      } else {
+        try { p.pauseVideo(); } catch (_) {}
+      }
+    }, { threshold: 0.3 });
+
+    if (section) observer.observe(section);
+
+    return () => {
+      observer.disconnect();
+      try { player?.destroy(); } catch (_) {}
+    };
+  }, []);
 
   return (
     <section
@@ -59,7 +103,7 @@ export default function Showreel() {
           </p>
         </div>
 
-        {/* ── YouTube Embed Card ── */}
+        {/* ── YouTube Player Card ── */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -68,24 +112,8 @@ export default function Showreel() {
           className="w-full max-w-5xl rounded-3xl overflow-hidden border border-slate-200/80 bg-slate-950 shadow-2xl shadow-slate-200/60 relative"
           style={{ aspectRatio: '16/9' }}
         >
-          {ready ? (
-            <iframe
-              ref={iframeRef}
-              src={embedSrc}
-              title="Editing Showreel"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="w-full h-full border-0"
-            />
-          ) : (
-            /* Placeholder shown before section enters view */
-            <div className="w-full h-full flex items-center justify-center bg-slate-950">
-              <div className="flex flex-col items-center gap-3 text-slate-500">
-                <div className="w-10 h-10 rounded-full border-2 border-green-600 border-t-transparent animate-spin" />
-                <span className="font-mono text-xs tracking-widest uppercase">Loading Reel…</span>
-              </div>
-            </div>
-          )}
+          {/* YT.Player mounts here */}
+          <div ref={divRef} className="w-full h-full" />
         </motion.div>
 
         {/* ── Bottom meta strip ── */}
