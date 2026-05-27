@@ -50,14 +50,17 @@ export default function Showreel() {
       // Keep muted — user must click to unmute (browser policy)
     };
 
-    /* Observer fires when card is roughly centered in viewport */
+    /* Observer — pause when scrolled out of view */
     const observer = new IntersectionObserver(([entry]) => {
       shouldPlay.current = entry.isIntersecting;
       const p = playerRef.current;
       if (!p) return;
-      if (entry.isIntersecting) { startPlay(); }
-      else { try { p.pauseVideo(); } catch (_) {} }
-    }, { threshold: 0.5, rootMargin: '-20% 0px -20% 0px' });
+      if (entry.isIntersecting) {
+        try { p.playVideo(); } catch (_) {}
+      } else {
+        try { p.pauseVideo(); } catch (_) {}
+      }
+    }, { threshold: 0.3 });
 
     if (sectionRef.current) observer.observe(sectionRef.current);
 
@@ -65,7 +68,7 @@ export default function Showreel() {
       new window.YT.Player(divRef.current, {
         videoId: YT_VIDEO_ID,
         playerVars: {
-          autoplay:       0,
+          autoplay:       1,
           mute:           1,
           loop:           1,
           playlist:       YT_VIDEO_ID,
@@ -79,7 +82,6 @@ export default function Showreel() {
           onReady(e) {
             playerRef.current = e.target;
             setPlayerReady(true);
-            if (shouldPlay.current) startPlay();
           },
         },
       });
