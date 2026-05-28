@@ -17,38 +17,30 @@ export default function Showreel() {
   const [isMuted,     setIsMuted]     = useState(true);
   const [isPlaying,   setIsPlaying]   = useState(false);
 
-  // Scroll animations
-  // "start end" means animation starts when the top of the section enters the bottom of the viewport
-  // "end end" means animation finishes when the bottom of the section leaves the bottom of the viewport
+  // Non-sticky fluid scroll animation
+  // The animation tracks the section's position relative to the viewport.
+  // "start 80%" - when top of section is at 80% of viewport height (just entering)
+  // "center center" - when center of section hits center of viewport
   const { scrollYProgress } = useScroll({
     target: containerRef,
-    offset: ["start end", "end end"]
+    offset: ["start 80%", "center center"]
   });
 
-  // Smoothly animate dimensions and border radius based on scroll position
-  // 0.00 to 0.15: Container enters viewport, video moves up from bottom. (Normal size)
-  // 0.15 to 0.33: Video continues to center and expands to full screen. (At 0.33, container pins)
-  // 0.33 to 0.70: Video stays full screen while pinned.
-  // 0.70 to 0.90: Video shrinks back to normal size while still pinned.
-  // 0.90 to 1.00: Video stays normal size. (At 1.0, container unpins and scrolls away)
-  const width = useTransform(scrollYProgress, [0, 0.15, 0.33, 0.7, 0.9, 1], ["85%", "85%", "100%", "100%", "85%", "85%"]);
-  const height = useTransform(scrollYProgress, [0, 0.15, 0.33, 0.7, 0.9, 1], ["48vw", "48vw", "100%", "100%", "48vw", "48vw"]);
-  const borderRadius = useTransform(scrollYProgress, [0, 0.15, 0.33, 0.7, 0.9, 1], ["24px", "24px", "0px", "0px", "24px", "24px"]);
+  const width = useTransform(scrollYProgress, [0, 1], ["85%", "95%"]);
+  const height = useTransform(scrollYProgress, [0, 1], ["48vw", "92vh"]);
+  const borderRadius = "24px";
+  const borderWidth = "1px";
   
-  // Fade out surrounding text when entering full screen, fade back in when shrinking
-  const textOpacity = useTransform(scrollYProgress, [0.15, 0.3, 0.75, 0.9], [1, 0, 0, 1]);
-  const textY = useTransform(scrollYProgress, [0.15, 0.3, 0.75, 0.9], [0, -40, -40, 0]);
-  const metaOpacity = useTransform(scrollYProgress, [0.15, 0.3, 0.75, 0.9], [1, 0, 0, 1]);
-  const metaY = useTransform(scrollYProgress, [0.15, 0.3, 0.75, 0.9], [0, 40, 40, 0]);
+  // Fade out text as the video scales up
+  const textOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, -40]);
+  const metaOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+  const metaY = useTransform(scrollYProgress, [0, 1], [0, 40]);
 
-  // Max bounds for normal size, unlocking to 100% for full screen
-  const maxWidth = useTransform(scrollYProgress, [0, 0.15, 0.33, 0.7, 0.9, 1], ["1024px", "1024px", "100%", "100%", "1024px", "1024px"]);
-  const maxHeight = useTransform(scrollYProgress, [0, 0.15, 0.33, 0.7, 0.9, 1], ["576px", "576px", "100%", "100%", "576px", "576px"]);
-  const borderWidth = useTransform(scrollYProgress, [0, 0.15, 0.33, 0.7, 0.9, 1], ["1px", "1px", "0px", "0px", "1px", "1px"]);
+  const maxWidth = useTransform(scrollYProgress, [0, 1], ["1024px", "95vw"]);
+  const maxHeight = useTransform(scrollYProgress, [0, 1], ["576px", "92vh"]);
 
-  // Elevate z-index above the navbar (z-50) when in fullscreen mode.
-  // Using a function ensures it returns strict integers instead of interpolating floats.
-  const zIndex = useTransform(scrollYProgress, (v) => (v > 0.15 && v < 0.9 ? 60 : 10));
+  const zIndex = useTransform(scrollYProgress, (v) => (v > 0.8 ? 60 : 10));
 
   const toggleMute = (e) => {
     e.stopPropagation();
@@ -114,7 +106,7 @@ export default function Showreel() {
   // Toggle navbar visibility based on video expansion
   useEffect(() => {
     return scrollYProgress.onChange((v) => {
-      if (v > 0.15 && v < 0.9) {
+      if (v > 0.8) {
         document.body.classList.add('hide-navbar');
       } else {
         document.body.classList.remove('hide-navbar');
@@ -126,19 +118,16 @@ export default function Showreel() {
     <section
       id="showreel"
       ref={containerRef}
-      className="relative h-[300vh] bg-white -mb-[20vh] md:-mb-[25vh]"
+      className="relative py-24 md:py-32 bg-white flex flex-col justify-center items-center"
     >
-      {/* Sticky container that stays on screen while scrolling through the 300vh section */}
-      <motion.div style={{ zIndex }} className="sticky top-0 w-full h-screen flex flex-col justify-center items-center overflow-hidden pointer-events-none">
-        
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-green-500/5 rounded-full filter blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-green-500/5 rounded-full filter blur-[150px] pointer-events-none" />
 
-        <div className="w-full relative z-10 flex flex-col items-center justify-center h-full">
+      <div className="w-full relative z-10 flex flex-col items-center justify-center">
 
           {/* Heading */}
           <motion.div 
             style={{ opacity: textOpacity, y: textY }}
-            className="absolute top-[8%] md:top-[12%] text-center px-6 z-0"
+            className="text-center px-6 z-0 mb-12"
           >
             <span className="font-mono text-xs text-green-600 uppercase tracking-widest block mb-3 font-semibold">
               Featured Reel
@@ -281,7 +270,6 @@ export default function Showreel() {
           </motion.div>
 
         </div>
-      </motion.div>
     </section>
   );
 }
