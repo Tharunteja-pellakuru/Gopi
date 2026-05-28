@@ -79,7 +79,7 @@ function ProjectCard({ project }) {
       transition={{ duration: 0.8, ease: 'easeOut' }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`relative rounded-3xl overflow-hidden border border-slate-200/60 bg-white shadow-md shadow-slate-100 group cursor-none transition-all duration-500 ${project.gridClass} ${project.glowColor}`}
+      className={`relative rounded-3xl overflow-hidden border border-slate-200/60 bg-white shadow-md shadow-slate-100 group cursor-none transition-all duration-500 w-[85vw] flex-shrink-0 snap-center md:w-auto ${project.gridClass} ${project.glowColor}`}
       data-cursor="view"
     >
       {/* Video Loop - starts paused, plays on hover */}
@@ -156,8 +156,8 @@ export default function Projects() {
           </p>
         </div>
 
-        {/* Asymmetrical Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 md:gap-8">
+        {/* Asymmetrical Grid / Mobile Swipe Carousel */}
+        <div className="flex md:grid overflow-x-auto snap-x snap-mandatory md:overflow-visible hide-scrollbar md:grid-cols-2 lg:grid-cols-12 gap-6 md:gap-8 pb-8 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0">
           {projects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
