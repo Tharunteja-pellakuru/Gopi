@@ -2,11 +2,11 @@ import { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Volume2, VolumeX, Maximize2, ChevronRight, ChevronLeft } from 'lucide-react';
 
-import video1 from '../assets/videos/Video1.mp4';
-import video2 from '../assets/videos/Video-2.mp4';
-import video3 from '../assets/videos/Video-3.mp4';
-
-const VIDEOS = [video1, video2, video3];
+const VIDEOS = [
+  '/videos/Video1.mp4', 
+  '/videos/Video-2.mp4', 
+  '/videos/Video-3.mp4'
+];
 
 export default function Showreel() {
   const containerRef = useRef(null);
