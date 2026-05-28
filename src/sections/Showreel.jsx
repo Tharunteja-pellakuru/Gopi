@@ -17,30 +17,31 @@ export default function Showreel() {
   const [isMuted,     setIsMuted]     = useState(true);
   const [isPlaying,   setIsPlaying]   = useState(false);
 
-  // Non-sticky fluid scroll animation
-  // The animation tracks the section's position relative to the viewport.
-  // "start 80%" - when top of section is at 80% of viewport height (just entering)
-  // "center center" - when center of section hits center of viewport
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start 80%", "center center"]
-  });
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const width = useTransform(scrollYProgress, [0, 1], ["85%", "95%"]);
-  const height = useTransform(scrollYProgress, [0, 1], ["48vw", "92vh"]);
+  // Use IntersectionObserver to trigger the expansion without scroll-linking
+  useEffect(() => {
+    // Triggers when the section is near the vertical center of the screen
+    const expandObserver = new IntersectionObserver(([entry]) => {
+      setIsExpanded(entry.isIntersecting);
+    }, { rootMargin: "-25% 0px -25% 0px", threshold: 0 });
+    
+    if (containerRef.current) expandObserver.observe(containerRef.current);
+    return () => expandObserver.disconnect();
+  }, []);
+
+  const width = isExpanded ? "95vw" : "85%";
+  const height = isExpanded ? "92vh" : "48vw";
+  const maxWidth = isExpanded ? "95vw" : "1024px";
+  const maxHeight = isExpanded ? "92vh" : "576px";
+  
+  const textOpacity = 1;
+  const textY = 0;
+  const metaOpacity = 1;
+  const metaY = 0;
   const borderRadius = "24px";
   const borderWidth = "1px";
-  
-  // Fade out text as the video scales up
-  const textOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
-  const textY = useTransform(scrollYProgress, [0, 1], [0, -40]);
-  const metaOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
-  const metaY = useTransform(scrollYProgress, [0, 1], [0, 40]);
-
-  const maxWidth = useTransform(scrollYProgress, [0, 1], ["1024px", "95vw"]);
-  const maxHeight = useTransform(scrollYProgress, [0, 1], ["576px", "92vh"]);
-
-  const zIndex = useTransform(scrollYProgress, (v) => (v > 0.8 ? 60 : 10));
+  const wrapperZIndex = isExpanded ? 60 : 10;
 
   const toggleMute = (e) => {
     e.stopPropagation();
@@ -103,16 +104,17 @@ export default function Showreel() {
     return () => observer.disconnect();
   }, [isMuted]);
 
-  // Toggle navbar visibility based on video expansion
+  // Toggle navbar visibility based on expansion state
   useEffect(() => {
-    return scrollYProgress.onChange((v) => {
-      if (v > 0.8) {
-        document.body.classList.add('hide-navbar');
-      } else {
-        document.body.classList.remove('hide-navbar');
-      }
-    });
-  }, [scrollYProgress]);
+    if (isExpanded) {
+      document.body.classList.add('hide-navbar');
+    } else {
+      document.body.classList.remove('hide-navbar');
+    }
+    
+    // Cleanup on unmount
+    return () => document.body.classList.remove('hide-navbar');
+  }, [isExpanded]);
 
   return (
     <section
@@ -126,8 +128,9 @@ export default function Showreel() {
 
           {/* Heading */}
           <motion.div 
-            style={{ opacity: textOpacity, y: textY }}
-            className="text-center px-6 z-0 mb-12"
+            animate={{ opacity: textOpacity, y: textY }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-center px-6 z-0 mb-8"
           >
             <span className="font-mono text-xs text-green-600 uppercase tracking-widest block mb-3 font-semibold">
               Featured Reel
@@ -140,127 +143,175 @@ export default function Showreel() {
             </p>
           </motion.div>
 
-          {/* Player card */}
-          <motion.div
-            style={{ 
-              width, 
-              height, 
-              maxWidth, 
-              maxHeight,
-              borderRadius,
-              borderWidth
-            }}
-            className="overflow-hidden border-slate-200/80 bg-slate-950 shadow-2xl shadow-slate-200/60 relative group cursor-pointer pointer-events-auto"
-            ref={cardRef}
-            onClick={toggleMute}
+          {/* Player Cards Wrapper */}
+          <motion.div 
+            animate={{ height, width: "100%", zIndex: wrapperZIndex }} 
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} // smooth spring-like easing
+            className="relative flex justify-center items-center"
           >
-            {/* HTML5 video player */}
-            <video
-              ref={videoRef}
-              src={VIDEOS[currentIndex]}
-              className="w-full h-full object-cover"
-              loop
-              playsInline
-              autoPlay 
-              muted={isMuted}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-            />
+            {VIDEOS.map((src, index) => {
+              const isCurrent = index === currentIndex;
+              const isNext = index === (currentIndex + 1) % VIDEOS.length;
+              const isPrev = index === (currentIndex - 1 + VIDEOS.length) % VIDEOS.length;
+              
+              // Only render if visible to save DOM nodes, though for 3-5 videos mapping all is fine
+              if (!isCurrent && !isNext && !isPrev && VIDEOS.length > 3) return null;
 
-            {/* Video navigation controls (Left / Right) - shown on hover */}
-            <AnimatePresence>
-              {VIDEOS.length > 1 && (
-                <>
-                  <motion.button
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    onClick={prevVideo}
-                    className="absolute left-5 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full
-                               bg-black/40 backdrop-blur-md border border-white/15 text-white
-                               hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer
-                               opacity-0 group-hover:opacity-100"
-                  >
-                    <ChevronLeft size={24} />
-                  </motion.button>
-                  <motion.button
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    onClick={nextVideo}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full
-                               bg-black/40 backdrop-blur-md border border-white/15 text-white
-                               hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer
-                               opacity-0 group-hover:opacity-100"
-                  >
-                    <ChevronRight size={24} />
-                  </motion.button>
-                </>
-              )}
-            </AnimatePresence>
+              let rotate = 0;
+              let scale = 1;
+              let x = 0;
+              let cardZIndex = 0;
+              let opacity = 0;
 
-            {/* ── Bottom controls: mute + fullscreen ── */}
-            <AnimatePresence>
-              <motion.div
-                key="controls"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={{ duration: 0.3 }}
-                className="absolute bottom-5 right-5 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              >
-                {/* Mute toggle */}
-                <button
-                  onClick={toggleMute}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full
-                             bg-black/60 backdrop-blur-md border border-white/15 text-white
-                             hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer"
-                >
-                  {isMuted
-                    ? <><VolumeX size={15} /><span className="font-mono text-[10px] tracking-widest uppercase">Muted</span></>
-                    : <><Volume2 size={15} /><span className="font-mono text-[10px] tracking-widest uppercase">Audio On</span></>
-                  }
-                </button>
+              if (isCurrent) {
+                rotate = 0; scale = 1; x = 0; cardZIndex = 30; opacity = 1;
+              } else if (isNext) {
+                rotate = 4; scale = 0.95; x = 50; cardZIndex = 20; opacity = 1;
+              } else if (isPrev) {
+                rotate = -4; scale = 0.95; x = -50; cardZIndex = 20; opacity = 1;
+              }
 
-                {/* Fullscreen */}
-                <button
-                  onClick={handleFullscreen}
-                  title="Fullscreen"
-                  className="flex items-center gap-2 px-3 py-2 rounded-full
-                             bg-black/60 backdrop-blur-md border border-white/15 text-white
-                             hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer"
-                >
-                  <Maximize2 size={15} />
-                  <span className="font-mono text-[10px] tracking-widest uppercase">Full</span>
-                </button>
-              </motion.div>
-            </AnimatePresence>
-            
-            {/* Video indicator dots */}
-            <AnimatePresence>
-              {VIDEOS.length > 1 && (
+              return (
                 <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  key={index}
+                  style={{ 
+                    borderRadius,
+                    borderWidth
+                  }}
+                  initial={false}
+                  animate={{ 
+                    rotate, 
+                    scale, 
+                    x, 
+                    zIndex: cardZIndex, 
+                    opacity,
+                    width,
+                    height,
+                    maxWidth,
+                    maxHeight
+                  }}
+                  transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                  className={`absolute overflow-hidden border-slate-200/80 bg-slate-950 shadow-2xl shadow-slate-200/60 ${isCurrent ? 'cursor-grab active:cursor-grabbing pointer-events-auto' : 'cursor-pointer pointer-events-auto'}`}
+                  ref={isCurrent ? cardRef : null}
+                  drag={isCurrent ? "x" : false}
+                  dragConstraints={{ left: 0, right: 0 }}
+                  dragElastic={0.2}
+                  onDragEnd={(e, { offset, velocity }) => {
+                    // Prevent drag from triggering click if it moved a lot
+                    if (offset.x < -50 || velocity.x < -300) {
+                      nextVideo();
+                    } else if (offset.x > 50 || velocity.x > 300) {
+                      prevVideo();
+                    }
+                  }}
+                  onClick={(e) => {
+                    // Check if it was a drag or a click by looking at the event
+                    if (isCurrent) {
+                      toggleMute(e);
+                    } else {
+                      e.stopPropagation();
+                      setCurrentIndex(index);
+                    }
+                  }}
                 >
-                  {VIDEOS.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        idx === currentIndex ? 'bg-green-500 scale-125' : 'bg-white/40 hover:bg-white/80'
-                      }`}
-                    />
-                  ))}
+                  <video
+                    ref={isCurrent ? videoRef : null}
+                    src={src}
+                    className="w-full h-full object-cover"
+                    loop
+                    playsInline
+                    autoPlay={isCurrent}
+                    muted={isCurrent ? isMuted : true}
+                    onPlay={isCurrent ? () => setIsPlaying(true) : undefined}
+                    onPause={isCurrent ? () => setIsPlaying(false) : undefined}
+                  />
+
+                  {/* UI Overlay (Only on Current Card) */}
+                  {isCurrent && (
+                    <>
+                      {/* Video navigation controls (Left / Right) - shown on hover */}
+                      <AnimatePresence>
+                        {VIDEOS.length > 1 && (
+                          <div className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                            <motion.button
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -10 }}
+                              onClick={prevVideo}
+                              className="absolute left-5 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full
+                                        bg-black/40 backdrop-blur-md border border-white/15 text-white
+                                        hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer pointer-events-auto"
+                            >
+                              <ChevronLeft size={24} />
+                            </motion.button>
+                            <motion.button
+                              initial={{ opacity: 0, x: 10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 10 }}
+                              onClick={nextVideo}
+                              className="absolute right-5 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full
+                                        bg-black/40 backdrop-blur-md border border-white/15 text-white
+                                        hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer pointer-events-auto"
+                            >
+                              <ChevronRight size={24} />
+                            </motion.button>
+                          </div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* ── Bottom controls: mute + fullscreen ── */}
+                      <div className="absolute bottom-5 right-5 z-20 flex items-center gap-2 opacity-0 hover:opacity-100 transition-opacity duration-300" style={{ opacity: 1 }}>
+                        <div className="group/controls flex items-center gap-2">
+                          <button
+                            onClick={toggleMute}
+                            className="flex items-center gap-2 px-3 py-2 rounded-full
+                                      bg-black/60 backdrop-blur-md border border-white/15 text-white
+                                      hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer pointer-events-auto"
+                          >
+                            {isMuted
+                              ? <><VolumeX size={15} /><span className="font-mono text-[10px] tracking-widest uppercase">Muted</span></>
+                              : <><Volume2 size={15} /><span className="font-mono text-[10px] tracking-widest uppercase">Audio On</span></>
+                            }
+                          </button>
+
+                          <button
+                            onClick={handleFullscreen}
+                            title="Fullscreen"
+                            className="flex items-center gap-2 px-3 py-2 rounded-full
+                                      bg-black/60 backdrop-blur-md border border-white/15 text-white
+                                      hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer pointer-events-auto"
+                          >
+                            <Maximize2 size={15} />
+                            <span className="font-mono text-[10px] tracking-widest uppercase">Full</span>
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Video indicator dots */}
+                      {VIDEOS.length > 1 && (
+                        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex gap-2 pointer-events-auto">
+                          {VIDEOS.map((_, idx) => (
+                            <button
+                              key={idx}
+                              onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                idx === currentIndex ? 'bg-green-500 scale-125' : 'bg-white/40 hover:bg-white/80'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </motion.div>
-              )}
-            </AnimatePresence>
+              );
+            })}
           </motion.div>
 
           {/* Meta strip */}
           <motion.div
-            style={{ opacity: metaOpacity, y: metaY }}
+            animate={{ opacity: metaOpacity, y: metaY }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="absolute bottom-[8%] md:bottom-[12%] flex flex-wrap justify-center gap-x-10 gap-y-2 font-mono text-[10px] text-slate-400 uppercase tracking-widest z-0"
           >
             <span>ProRes 422 HQ</span><span>·</span>

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
-import { Play, MessageSquare, ArrowDown, Heart, Share2, Bookmark, Music2, ChevronUp, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, MessageSquare, ArrowDown, Heart, Share2, Bookmark, Music2, ChevronUp, Volume2, VolumeX, Maximize, X } from 'lucide-react';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Magnet from '../components/Magnet';
 import shortVideo1 from '../assets/short-videos/Short-Video-1.mp4';
 import profilePic from '../assets/Gopi.png';
@@ -22,7 +23,7 @@ const reels = [
     category: 'CINEMATICS',
     views: '1.7M',
     likes: '34.2K',
-    video: 'https://player.vimeo.com/external/409099132.sd.mp4?s=d1cc32b694b2a8d115fa7621422797e8838d172e&profile_id=165&oauth2_token_id=57447761',
+    video: shortVideo1,
     color: '#7c3aed',
     tag: '#cinematic',
   },
@@ -32,23 +33,35 @@ const reels = [
     category: 'TRANSITIONS',
     views: '3.4M',
     likes: '91.1K',
-    video: 'https://player.vimeo.com/external/554181213.sd.mp4?s=a7d2e06180a9d9e4a3c104445585b4b1a41cc63e&profile_id=165&oauth2_token_id=57447761',
+    video: shortVideo1,
     color: '#0891b2',
     tag: '#visualflow',
   },
 ];
 
+/* ─── Portal Modal (renders into document.body, bypassing stacking contexts) ─── */
+function PortalModal({ children }) {
+  if (typeof document === 'undefined') return null;
+  return createPortal(children, document.body);
+}
+
 /* ─── Reel Card ───────────────────────────────────────────── */
-function ReelCard({ reel, active, inView, onSwipeUp, onSwipeDown }) {
+function ReelCard({ reel, active, inView, onSwipeUp, onSwipeDown, isFullscreen, onExpand, globalMuted, onMuteToggle }) {
   const videoRef = useRef(null);
   const [liked, setLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [likeAnim, setLikeAnim] = useState(false);
+  const [doubleTapHeart, setDoubleTapHeart] = useState(false);
   const y = useMotionValue(0);
   const opacity = useTransform(y, [-120, 0, 120], [0, 1, 0]);
-  const dragStartY = useRef(0);
+  const lastTap = useRef(0);
 
-  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  /* Sync mute state from parent */
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (vid) vid.muted = globalMuted;
+  }, [globalMuted]);
 
   /* play / pause based on active & inView */
   useEffect(() => {
@@ -56,23 +69,37 @@ function ReelCard({ reel, active, inView, onSwipeUp, onSwipeDown }) {
     if (!vid) return;
     if (active && inView) {
       vid.currentTime = 0;
-      vid.muted = false;
-      setIsMuted(false);
-      vid.play().catch(() => {
-        /* Browser blocked unmuted autoplay — fall back to muted */
-        vid.muted = true;
-        setIsMuted(true);
-        vid.play().catch(() => {});
-      });
+      vid.muted = globalMuted;
+      vid.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     } else {
       vid.pause();
     }
   }, [active, inView]);
 
   const handleLike = () => {
-    setLiked(v => !v);
+    if (!liked) {
+      setLiked(true);
+    }
     setLikeAnim(true);
     setTimeout(() => setLikeAnim(false), 600);
+  };
+
+  const handleTap = () => {
+    const now = Date.now();
+    if (now - lastTap.current < 300) {
+      // Double tap — trigger like
+      handleLike();
+      setDoubleTapHeart(true);
+      setTimeout(() => setDoubleTapHeart(false), 900);
+    } else {
+      // Single tap — play/pause
+      const vid = videoRef.current;
+      if (vid) {
+        if (vid.paused) vid.play();
+        else vid.pause();
+      }
+    }
+    lastTap.current = now;
   };
 
   const handleDragEnd = (_, info) => {
@@ -83,55 +110,53 @@ function ReelCard({ reel, active, inView, onSwipeUp, onSwipeDown }) {
 
   return (
     <motion.div
-      className="absolute inset-0 rounded-[28px] overflow-hidden select-none"
+      className={`absolute inset-0 overflow-hidden select-none ${isFullscreen ? 'rounded-none sm:rounded-[28px]' : 'rounded-[28px]'}`}
       style={{ opacity, y }}
       drag="y"
       dragConstraints={{ top: -120, bottom: 120 }}
       dragElastic={0.3}
       onDragEnd={handleDragEnd}
-      data-cursor="view"
     >
-      {/* Video */}
+      {/* Video — single tap = play/pause, double tap = like */}
       <video
         ref={videoRef}
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover cursor-pointer"
         loop
         playsInline
         preload="metadata"
+        muted={globalMuted}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onClick={handleTap}
       >
         <source src={reel.video} type="video/mp4" />
       </video>
 
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
 
-      {/* Top: category badge */}
-      <div className="absolute top-4 left-4 flex items-center gap-2">
-        <span
-          className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold tracking-widest text-white"
-          style={{ background: reel.color + 'cc' }}
-        >
-          {reel.category}
-        </span>
-      </div>
-
-      {/* Top-right: swipe hint */}
-      <motion.div
-        className="absolute top-4 right-4 flex flex-col items-center gap-0.5"
-        animate={{ y: [0, -6, 0] }}
-        transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-      >
-        <ChevronUp size={16} className="text-white/70" />
-        <ChevronUp size={16} className="text-white/40" style={{ marginTop: -6 }} />
-        <span className="text-white/50 font-mono text-[8px] mt-1 tracking-widest">SWIPE</span>
-      </motion.div>
+      {/* Double-tap heart burst */}
+      <AnimatePresence>
+        {doubleTapHeart && (
+          <motion.div
+            key="heart-burst"
+            initial={{ scale: 0, opacity: 1 }}
+            animate={{ scale: 1.6, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none z-20"
+          >
+            <Heart size={90} className="text-red-500 fill-red-500 drop-shadow-2xl" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Right-side action buttons */}
       <div className="absolute right-3 bottom-20 flex flex-col items-center gap-5">
         {/* Like */}
         <button
-          className="flex flex-col items-center gap-1 cursor-none"
-          onClick={handleLike}
+          className="flex flex-col items-center gap-1 cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); handleLike(); }}
         >
           <motion.div
             animate={likeAnim ? { scale: [1, 1.5, 1] } : {}}
@@ -149,58 +174,51 @@ function ReelCard({ reel, active, inView, onSwipeUp, onSwipeDown }) {
           </span>
         </button>
 
-        {/* Mute Toggle */}
+        {/* Play/Pause Toggle */}
         <button
           className="flex flex-col items-center gap-1 cursor-none"
           onClick={() => {
             const vid = videoRef.current;
             if (vid) {
-              vid.muted = !vid.muted;
-              setIsMuted(vid.muted);
+              if (vid.paused) vid.play();
+              else vid.pause();
             }
           }}
         >
-          {isMuted ? <VolumeX size={20} className="text-white" /> : <Volume2 size={20} className="text-white" />}
-          <span className="text-white/80 font-mono text-[9px]">{isMuted ? 'Muted' : 'Audio'}</span>
+          {isPlaying ? <Pause size={20} className="text-white" /> : <Play size={20} className="text-white" />}
+          <span className="text-white/80 font-mono text-[9px]">{isPlaying ? 'Pause' : 'Play'}</span>
         </button>
 
-        {/* Share */}
-        <button className="flex flex-col items-center gap-1 cursor-none">
-          <Share2 size={20} className="text-white" />
-          <span className="text-white/80 font-mono text-[9px]">Share</span>
-        </button>
-
-        {/* Save */}
+        {/* Mute Toggle */}
         <button
-          className="flex flex-col items-center gap-1 cursor-none"
-          onClick={() => setSaved(v => !v)}
+          className="flex flex-col items-center gap-1 cursor-pointer"
+          onClick={(e) => { e.stopPropagation(); onMuteToggle(); }}
         >
-          <Bookmark
-            size={20}
-            className={`transition-colors ${saved ? 'text-yellow-400 fill-yellow-400' : 'text-white'}`}
-          />
-          <span className="text-white/80 font-mono text-[9px]">Save</span>
+          {globalMuted ? <VolumeX size={20} className="text-white" /> : <Volume2 size={20} className="text-white" />}
+          <span className="text-white/80 font-mono text-[9px]">{globalMuted ? 'Muted' : 'Audio'}</span>
         </button>
 
-        {/* Spinning music disc */}
-        <motion.div
-          className="w-8 h-8 rounded-full border-2 border-white/40 overflow-hidden flex items-center justify-center mt-1"
-          style={{ background: reel.color + '99' }}
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
-        >
-          <Music2 size={14} className="text-white" />
-        </motion.div>
+        {/* Expand / Full View Toggle (Only show if not already fullscreen) */}
+        {!isFullscreen && (
+          <button
+            className="flex flex-col items-center gap-1 cursor-none"
+            onClick={onExpand}
+          >
+            <Maximize size={20} className="text-white" />
+            <span className="text-white/80 font-mono text-[9px]">Expand</span>
+          </button>
+        )}
+
       </div>
 
       {/* Bottom info */}
-      <div className="absolute bottom-4 left-4 right-16">
-        <p className="text-white font-clash font-bold text-lg leading-tight">{reel.title}</p>
-        <p className="text-white/70 font-mono text-[10px] mt-0.5">{reel.tag}</p>
-        <div className="flex items-center gap-2 mt-1.5">
+      <div className="absolute bottom-5 left-5 right-16">
+        <p className="text-white font-clash font-semibold text-base leading-tight">{reel.title}</p>
+        <p className="text-white/70 font-mono text-[9px] mt-1">{reel.tag}</p>
+        <div className="flex items-center gap-2 mt-2">
           <span
-            className="text-[9px] font-mono text-white/60 px-2 py-0.5 rounded-full border"
-            style={{ borderColor: reel.color + '88' }}
+            className="text-[8px] font-mono text-white/60 px-2 py-0.5 rounded-full border"
+            style={{ borderColor: reel.color + '66' }}
           >
             {reel.views} views
           </span>
@@ -211,9 +229,10 @@ function ReelCard({ reel, active, inView, onSwipeUp, onSwipeDown }) {
 }
 
 /* ─── Swipeable Reel Stack ────────────────────────────────── */
-function ReelStack({ inView }) {
+function ReelStack({ inView, isFullscreen = false, onExpand }) {
   const [current, setCurrent] = useState(0);
-  const [direction, setDirection] = useState(0); // -1 up, 1 down
+  const [direction, setDirection] = useState(0);
+  const [globalMuted, setGlobalMuted] = useState(true);
 
   const goNext = useCallback(() => {
     setDirection(-1);
@@ -232,14 +251,20 @@ function ReelStack({ inView }) {
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center">
-      {/* Phone shell */}
+    <div className="relative w-full h-full flex flex-col items-center justify-center">
+      {/* Phone shell or Fullscreen shell */}
       <div
-        className="relative rounded-[28px] overflow-hidden shadow-2xl"
-        style={{
+        className={`relative overflow-hidden shadow-2xl ${isFullscreen ? 'rounded-[28px]' : 'rounded-[28px]'}`}
+        style={isFullscreen ? {
+          /* 9:16 card capped to 88% of viewport height */
+          height: 'min(88vh, calc(56.25vw * 1.6))',
+          width: 'min(calc(88vh * 9 / 16), 420px)',
+          background: '#111',
+          boxShadow: '0 40px 100px -10px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1)',
+        } : {
           width: '100%',
           aspectRatio: '9/16',
-          maxWidth: 260,
+          maxWidth: 340,
           background: '#111',
           boxShadow: '0 30px 80px -10px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08)',
         }}
@@ -262,56 +287,33 @@ function ReelStack({ inView }) {
               inView={inView}
               onSwipeUp={goNext}
               onSwipeDown={goPrev}
+              isFullscreen={isFullscreen}
+              onExpand={onExpand}
+              globalMuted={globalMuted}
+              onMuteToggle={() => setGlobalMuted(m => !m)}
             />
           </motion.div>
         </AnimatePresence>
+      </div>
 
-        {/* Progress bar (top) */}
-        <div className="absolute top-0 left-0 right-0 flex gap-1 px-3 pt-2 z-30 pointer-events-none">
+      {/* Dot indicators below phone (Hide in fullscreen) */}
+      {!isFullscreen && (
+        <div className="flex items-center gap-2 mt-4">
           {reels.map((r, i) => (
-            <div key={r.id} className="flex-1 h-[2px] rounded-full bg-white/20 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: r.color }}
-                animate={{ width: i === current ? '100%' : i < current ? '100%' : '0%' }}
-                transition={{ duration: i === current ? 0.4 : 0 }}
-              />
-            </div>
+            <button
+              key={r.id}
+              onClick={() => { setDirection(i > current ? -1 : 1); setCurrent(i); }}
+              className="rounded-full transition-all duration-300 cursor-none"
+              style={{
+                width: i === current ? 20 : 8,
+                height: 8,
+                background: i === current ? r.color : '#d1d5db',
+              }}
+            />
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Dot indicators below phone */}
-      <div className="flex items-center gap-2 mt-4">
-        {reels.map((r, i) => (
-          <button
-            key={r.id}
-            onClick={() => { setDirection(i > current ? -1 : 1); setCurrent(i); }}
-            className="rounded-full transition-all duration-300 cursor-none"
-            style={{
-              width: i === current ? 20 : 8,
-              height: 8,
-              background: i === current ? r.color : '#d1d5db',
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Navigation arrows */}
-      <div className="absolute right-[-40px] top-1/2 -translate-y-1/2 hidden lg:flex flex-col gap-3">
-        <button
-          onClick={goPrev}
-          className="w-8 h-8 rounded-full bg-white border border-slate-200 shadow flex items-center justify-center hover:scale-110 transition-transform cursor-none"
-        >
-          <ChevronUp size={14} className="text-slate-600" />
-        </button>
-        <button
-          onClick={goNext}
-          className="w-8 h-8 rounded-full bg-white border border-slate-200 shadow flex items-center justify-center hover:scale-110 transition-transform cursor-none"
-        >
-          <ChevronUp size={14} className="text-slate-600 rotate-180" />
-        </button>
-      </div>
     </div>
   );
 }
@@ -319,6 +321,7 @@ function ReelStack({ inView }) {
 /* ─── Hero Section ────────────────────────────────────────── */
 export default function Hero() {
   const [inView, setInView] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -471,11 +474,61 @@ export default function Hero() {
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.9, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="lg:col-span-5 relative flex items-center justify-center h-[520px] lg:h-auto lg:pt-4"
+          className="lg:col-span-5 relative flex items-center justify-center h-[640px] pt-8 lg:h-auto lg:pt-12"
         >
-          <ReelStack />
+          <ReelStack inView={inView && !isModalOpen} onExpand={() => setIsModalOpen(true)} />
         </motion.div>
       </div>
+
+      {/* Full-Screen Reels Modal — rendered via Portal into body to fix backdrop-filter */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <PortalModal>
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden">
+              {/* Background Overlay with real glassmorphic blur */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0"
+                style={{
+                  backdropFilter: 'blur(30px) brightness(0.55) saturate(2.5)',
+                  WebkitBackdropFilter: 'blur(30px) brightness(0.55) saturate(2.5)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                }}
+                onClick={() => setIsModalOpen(false)}
+              />
+
+              {/* Close button — truly fixed to viewport top-right, outside the card */}
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="fixed top-5 right-5 z-[10000] w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer"
+                style={{
+                  background: 'rgba(255,255,255,0.18)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                }}
+              >
+                <X size={20} className="text-white" />
+              </button>
+
+              {/* Modal Content */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.92, y: 20 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="relative z-10 flex flex-col items-center justify-center"
+                style={{ filter: 'drop-shadow(0 8px 48px rgba(0,0,0,0.5))' }}
+              >
+                <ReelStack inView={true} isFullscreen={true} />
+              </motion.div>
+            </div>
+          </PortalModal>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Scroll Anchor */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
