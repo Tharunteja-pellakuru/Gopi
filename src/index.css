@@ -111,3 +111,10 @@ html.lenis {
 .lenis-scrolling iframe {
   pointer-events: none;
 }
+
+/* Hide Navbar when video is fullscreen */
+body.hide-navbar header {
+  transform: translateY(-150%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
