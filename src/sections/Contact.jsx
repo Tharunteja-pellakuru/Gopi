@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import emailjs from '@emailjs/browser';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Mail, MessageCircle, Phone, ChevronDown, Check } from 'lucide-react';
 import Magnet from '../components/Magnet';
@@ -22,9 +23,9 @@ const InstagramIcon = (props) => (
 );
 
 const socials = [
-  { name: 'Instagram', icon: InstagramIcon, href: 'https://instagram.com/pgeditz', color: 'hover:text-pink-600 hover:border-pink-200 bg-pink-50/50' },
-  { name: 'WhatsApp', icon: Phone, href: 'https://wa.me', color: 'hover:text-green-600 hover:border-green-200 bg-green-50/50' },
-  { name: 'Email', icon: Mail, href: 'gopichandpellakuru71@gmail.com', color: 'hover:text-blue-600 hover:border-blue-200 bg-blue-50/50' },
+  { name: 'Instagram', icon: InstagramIcon, href: 'https://www.instagram.com/pg_officially?igsh=bGU2OHI3bDdwcnNy', color: 'hover:text-pink-600 hover:border-pink-200 bg-pink-50/50' },
+  { name: 'WhatsApp', icon: Phone, href: 'https://wa.me/919347552708', color: 'hover:text-green-600 hover:border-green-200 bg-green-50/50' },
+  { name: 'Email', icon: Mail, href: 'mailto:gopichandpellakuru71@gmail.com', color: 'hover:text-blue-600 hover:border-blue-200 bg-blue-50/50' },
   { name: 'Discord', icon: MessageCircle, href: 'https://discord.com', color: 'hover:text-indigo-600 hover:border-indigo-200 bg-indigo-50/50' },
 ];
 
@@ -32,6 +33,7 @@ export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', project: 'Short-form', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
     { value: 'Short-form', label: 'Instagram Reel / Short-form Campaign' },
@@ -41,13 +43,37 @@ export default function Contact() {
     { value: 'Custom', label: 'Other Custom Project' },
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setFormData({ name: '', email: '', project: 'Short-form', message: '' });
-    }, 3000);
+    setIsSubmitting(true);
+
+    try {
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        project_type: formData.project,
+        message: formData.message,
+      };
+
+      await emailjs.send(serviceId, templateId, templateParams, {
+        publicKey: publicKey,
+      });
+      
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setFormData({ name: '', email: '', project: 'Short-form', message: '' });
+      }, 3000);
+    } catch (error) {
+      console.error("EmailJS Error Details:", error?.text || error);
+      alert(`Failed to send email: ${error?.text || "Please check your console for details"}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -263,10 +289,11 @@ export default function Contact() {
                   <Magnet range={25} strength={0.25} className="w-full">
                     <button
                       type="submit"
-                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-general font-bold text-sm transition-all duration-300 cursor-none shadow-md shadow-green-500/15"
+                      disabled={isSubmitting}
+                      className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-green-600 hover:bg-green-700 text-white font-general font-bold text-sm transition-all duration-300 cursor-none shadow-md shadow-green-500/15 disabled:opacity-70 disabled:cursor-not-allowed"
                       data-cursor="link"
                     >
-                      Export Message <Send size={16} />
+                      {isSubmitting ? 'Exporting...' : 'Export Message'} <Send size={16} />
                     </button>
                   </Magnet>
                 </div>
