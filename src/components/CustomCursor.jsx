@@ -70,7 +70,7 @@ export default function CustomCursor() {
         return {
           width: 80,
           height: 80,
-          backgroundColor: '#16A34A',
+          backgroundColor: '#fc6f03',
           borderColor: 'transparent',
           color: '#ffffff',
           scale: 1.1
@@ -79,7 +79,7 @@ export default function CustomCursor() {
         return {
           width: 80,
           height: 80,
-          backgroundColor: '#22C55E',
+          backgroundColor: '#fc6f03',
           borderColor: 'transparent',
           color: '#ffffff',
           scale: 1.1
@@ -88,7 +88,7 @@ export default function CustomCursor() {
         return {
           width: 85,
           height: 85,
-          backgroundColor: '#059669',
+          backgroundColor: '#e05800',
           borderColor: 'transparent',
           color: '#ffffff',
           scale: 1.1
@@ -97,9 +97,9 @@ export default function CustomCursor() {
         return {
           width: 50,
           height: 50,
-          backgroundColor: 'rgba(22, 163, 74, 0.08)',
-          borderColor: 'rgba(22, 163, 74, 0.3)',
-          color: '#15803D',
+          backgroundColor: 'rgba(252, 111, 3, 0.08)',
+          borderColor: 'rgba(252, 111, 3, 0.3)',
+          color: '#fc6f03',
           scale: 1.2
         };
       default:

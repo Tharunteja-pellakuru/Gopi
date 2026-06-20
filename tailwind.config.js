@@ -7,6 +7,32 @@ export default {
   theme: {
     extend: {
       colors: {
+        green: {
+          50: '#fff3ea',
+          100: '#ffe4d0',
+          200: '#ffc5a0',
+          300: '#ffa160',
+          400: '#ff7c10',
+          500: '#fc6f03',
+          600: '#fc6f03',
+          700: '#d35c02',
+          800: '#aa4a01',
+          900: '#8b3d01',
+          950: '#522000',
+        },
+        emerald: {
+          50: '#fff3ea',
+          100: '#ffe4d0',
+          200: '#ffc5a0',
+          300: '#ffa160',
+          400: '#ff7c10',
+          500: '#fc6f03',
+          600: '#fc6f03',
+          700: '#d35c02',
+          800: '#aa4a01',
+          900: '#8b3d01',
+          950: '#522000',
+        },
         background: {
           dark: '#FFFFFF',
           deep: '#FFFFFF',
@@ -14,11 +40,11 @@ export default {
           panel: '#FFFFFF',
         },
         accent: {
-          purple: '#16A34A',
-          blue: '#22C55E',
-          red: '#15803D',
-          orange: '#86EFAC',
-          violet: '#059669',
+          purple: '#fc6f03',
+          blue: '#fc6f03',
+          red: '#fc6f03',
+          orange: '#ffc5a0',
+          violet: '#fc6f03',
         }
       },
       fontFamily: {

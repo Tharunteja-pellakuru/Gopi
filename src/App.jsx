@@ -39,10 +39,11 @@ export default function App() {
           <Navbar />
 
           {/* Structured Sections */}
-          <main className="relative z-10 w-full">
+          <main className="relative z-10 w-full overflow-x-hidden">
             <Hero />
+
             <Projects />
-            <Showreel />
+                        {/* <Showreel /> */}
             <EditingVibes />
             <Tools />
             <About />

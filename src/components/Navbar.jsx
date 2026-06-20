@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 import Magnet from './Magnet';
+import logoImg from '../assets/Logo.png';
 
 const NAV_ITEMS = [
   { label: 'Home', href: '#home' },
-  { label: 'Work', href: '#work' },
   { label: 'Showreel', href: '#showreel' },
+  { label: 'Work', href: '#work' },
   { label: 'About', href: '#about' },
   { label: 'Services', href: '#services' },
   { label: 'Contact', href: '#contact' },
@@ -56,13 +57,15 @@ export default function Navbar() {
           <a 
             href="#home" 
             onClick={(e) => handleScrollTo(e, '#home')} 
-            className="flex items-center gap-2 group cursor-none"
+            className="flex items-center gap-2 group cursor-none h-10 md:h-12 relative w-32 md:w-44"
             data-cursor="link"
           >
-            {/* Brand Name */}
-            <span className="font-clash text-3xl md:text-4xl font-bold tracking-tight text-slate-900 group-hover:text-green-600 transition-colors duration-300">
-              GOP<span className="text-green-600 group-hover:text-green-500 transition-colors">I</span>
-            </span>
+            {/* Brand Logo */}
+            <img 
+              src={logoImg} 
+              alt="PG Video Editor" 
+              className="h-full w-auto object-contain transition-transform duration-300 scale-[2.2] md:scale-[2.8] origin-left -translate-x-6 md:-translate-x-10 group-hover:scale-[2.35] md:group-hover:scale-[2.95]" 
+            />
           </a>
 
           {/* Desktop Menu */}

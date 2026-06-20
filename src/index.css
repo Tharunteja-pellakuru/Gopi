@@ -17,9 +17,12 @@
     color-scheme: light;
   }
   
-  body {
+  html,
+  body,
+  #root {
     background-color: #FFFFFF;
     color: #0F172A;
+    max-width: 100vw;
     overflow-x: hidden;
   }
 
@@ -128,3 +131,105 @@ body.hide-navbar header {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Custom Orange Theme (#fc6f03) Overrides */
+:root {
+  --primary-orange: #fc6f03;
+  --primary-orange-hover: #e05800;
+  --primary-orange-light: #fff3ea;
+  --primary-orange-border: #ffc5a0;
+}
+
+/* Text Colors */
+.text-green-400 { color: #ffa160 !important; }
+.text-green-500, .text-green-600, .text-green-700, .text-green-800,
+.text-emerald-500, .text-emerald-600, .text-emerald-700, .text-emerald-800 {
+  color: var(--primary-orange) !important;
+}
+
+/* Hover text colors */
+.hover\:text-green-600:hover, .hover\:text-green-500:hover, .hover\:text-emerald-600:hover {
+  color: var(--primary-orange-hover) !important;
+}
+
+/* Background Colors */
+.bg-green-500, .bg-green-600, .bg-green-700,
+.bg-emerald-500, .bg-emerald-600, .bg-emerald-700 {
+  background-color: var(--primary-orange) !important;
+}
+.bg-green-50, .bg-emerald-50 {
+  background-color: var(--primary-orange-light) !important;
+}
+.bg-green-100, .bg-emerald-100 {
+  background-color: #ffe4d0 !important;
+}
+
+/* Translucent backgrounds */
+.bg-green-50\/30, .bg-emerald-50\/30 {
+  background-color: rgba(255, 243, 234, 0.3) !important;
+}
+.bg-green-50\/40, .bg-emerald-50\/40 {
+  background-color: rgba(255, 243, 234, 0.4) !important;
+}
+.bg-green-50\/50 {
+  background-color: rgba(255, 243, 234, 0.5) !important;
+}
+.bg-green-500\/5, .bg-emerald-500\/5 {
+  background-color: rgba(252, 111, 3, 0.05) !important;
+}
+.bg-green-500\/10 {
+  background-color: rgba(252, 111, 3, 0.1) !important;
+}
+
+/* Gradient stops */
+.from-green-600 {
+  --tw-gradient-from: var(--primary-orange) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(252, 111, 3, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.to-green-500 {
+  --tw-gradient-to: var(--primary-orange) var(--tw-gradient-to-position) !important;
+}
+.via-emerald-600 {
+  --tw-gradient-to: rgba(252, 111, 3, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--primary-orange) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
+
+/* Hover background colors */
+.hover\:bg-green-600:hover, .hover\:bg-green-700:hover,
+.hover\:bg-emerald-600:hover, .hover\:bg-emerald-700:hover {
+  background-color: var(--primary-orange-hover) !important;
+}
+.hover\:bg-green-100\/50:hover, .hover\:bg-emerald-100\/50:hover {
+  background-color: rgba(255, 228, 208, 0.5) !important;
+}
+
+/* Borders */
+.border-green-200, .border-green-300, .border-emerald-200, .border-emerald-300 {
+  border-color: var(--primary-orange-border) !important;
+}
+.border-l-green-600, .border-l-green-700, .border-l-emerald-500, .border-l-emerald-600 {
+  border-left-color: var(--primary-orange) !important;
+}
+.hover\:border-green-200:hover {
+  border-color: var(--primary-orange-border) !important;
+}
+
+/* Focus and ring states */
+.focus\:border-green-500:focus {
+  border-color: var(--primary-orange) !important;
+}
+.focus\:ring-green-500\/10:focus {
+  --tw-ring-color: rgba(252, 111, 3, 0.1) !important;
+}
+
+/* Box Shadows */
+.shadow-green-500\/10 {
+  --tw-shadow-color: rgba(252, 111, 3, 0.1) !important;
+  --tw-shadow: var(--tw-shadow-keyed, 0 0 #0000) !important;
+}
+.shadow-green-500\/15 {
+  --tw-shadow-color: rgba(252, 111, 3, 0.15) !important;
+  --tw-shadow: var(--tw-shadow-keyed, 0 0 #0000) !important;
+}
+

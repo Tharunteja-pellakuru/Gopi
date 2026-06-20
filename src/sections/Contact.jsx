@@ -1,32 +1,62 @@
 import { useState } from 'react';
 import emailjs from '@emailjs/browser';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Mail, MessageCircle, Phone, ChevronDown, Check } from 'lucide-react';
+import { Send, ChevronDown, Check } from 'lucide-react';
 import Magnet from '../components/Magnet';
 
-const InstagramIcon = (props) => (
+const InstagramIcon = ({ size = 20, ...props }) => (
   <svg
     viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    width="1em"
-    height="1em"
+    fill="currentColor"
+    width={size}
+    height={size}
     {...props}
   >
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
+  </svg>
+);
+
+const WhatsAppIcon = ({ size = 20, ...props }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    width={size}
+    height={size}
+    {...props}
+  >
+    <path d="M19.001 4.908A9.817 9.817 0 0 0 11.992 2C6.534 2 2.085 6.448 2.08 11.91c0 1.748.458 3.45 1.321 4.956L2 22l5.251-1.378a9.837 9.837 0 0 0 4.74 1.208h.004c5.454 0 9.905-4.45 9.91-9.913a9.813 9.813 0 0 0-2.904-6.917zM11.993 20.143c-1.482 0-2.934-.397-4.21-1.15l-.302-.18-3.13.82.834-3.05-.198-.314a8.219 8.219 0 0 1-1.258-4.36c.005-4.543 3.7-8.235 8.247-8.235 2.2 0 4.27.859 5.823 2.416a8.19 8.19 0 0 1 2.41 5.83c-.005 4.544-3.7 8.238-8.246 8.238zm4.52-6.17c-.247-.124-1.463-.72-1.69-.803-.226-.08-.392-.12-.556.125-.165.244-.64.801-.783.965-.143.165-.287.186-.534.061-.247-.125-1.043-.385-1.986-1.227-.733-.654-1.229-1.463-1.373-1.71-.143-.247-.015-.38.109-.504.112-.112.247-.29.37-.435.124-.145.165-.248.248-.414.083-.165.04-.31-.02-.435-.062-.124-.557-1.343-.763-1.84-.2-.48-.401-.416-.556-.424-.144-.007-.31-.008-.475-.008-.165 0-.433.062-.66.31-.227.249-.867.848-.867 2.07 0 1.22.888 2.397.986 2.531.099.135 1.747 2.668 4.232 3.74.59.255 1.05.408 1.41.52.595.19 1.135.162 1.563.098.477-.07 1.463-.598 1.669-1.176.206-.578.206-1.072.144-1.176-.062-.103-.227-.165-.474-.29z"/>
+  </svg>
+);
+
+const EmailIcon = ({ size = 20, ...props }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    width={size}
+    height={size}
+    {...props}
+  >
+    <path d="M24 4.5v15c0 .85-.65 1.5-1.5 1.5H19V8.5l-7 5-7-5V21H2.5A1.5 1.5 0 0 1 1 19.5v-15c0-.85.65-1.5 1.5-1.5H4L12 8l8-6h1.5A1.5 1.5 0 0 1 24 4.5z" />
+  </svg>
+);
+
+const DiscordIcon = ({ size = 20, ...props }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    width={size}
+    height={size}
+    {...props}
+  >
+    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.078.078 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z" />
   </svg>
 );
 
 const socials = [
-  { name: 'Instagram', icon: InstagramIcon, href: 'https://www.instagram.com/pg_officially?igsh=bGU2OHI3bDdwcnNy', color: 'hover:text-pink-600 hover:border-pink-200 bg-pink-50/50' },
-  { name: 'WhatsApp', icon: Phone, href: 'https://wa.me/919347552708', color: 'hover:text-green-600 hover:border-green-200 bg-green-50/50' },
-  { name: 'Email', icon: Mail, href: 'mailto:gopichandpellakuru71@gmail.com', color: 'hover:text-blue-600 hover:border-blue-200 bg-blue-50/50' },
-  { name: 'Discord', icon: MessageCircle, href: 'https://discord.com', color: 'hover:text-indigo-600 hover:border-indigo-200 bg-indigo-50/50' },
+  { name: 'Instagram', icon: InstagramIcon, href: 'https://www.instagram.com/pg_officially?igsh=bGU2OHI3bDdwcnNy', color: 'hover:text-[#E1306C] hover:border-[#E1306C]/30 hover:bg-[#E1306C]/5' },
+  { name: 'WhatsApp', icon: WhatsAppIcon, href: 'https://wa.me/919347552708', color: 'hover:text-[#25D366] hover:border-[#25D366]/30 hover:bg-[#25D366]/5' },
+  { name: 'Email', icon: EmailIcon, href: 'mailto:gopichandpellakuru71@gmail.com', color: 'hover:text-[#EA4335] hover:border-[#EA4335]/30 hover:bg-[#EA4335]/5' },
+  { name: 'Discord', icon: DiscordIcon, href: 'https://discord.com', color: 'hover:text-[#5865F2] hover:border-[#5865F2]/30 hover:bg-[#5865F2]/5' },
 ];
 
 export default function Contact() {
@@ -79,7 +109,7 @@ export default function Contact() {
   return (
     <section 
       id="contact" 
-      className="relative min-h-screen py-24 px-6 md:px-12 bg-white flex justify-center items-center overflow-hidden"
+      className="relative min-h-screen py-24 bg-white flex justify-center items-center overflow-hidden"
     >
       {/* Background Animated Glows & Particles */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vw] bg-green-500/5 rounded-full filter blur-[150px] pointer-events-none" />
@@ -110,7 +140,7 @@ export default function Contact() {
         ))}
       </div>
 
-      <div className="max-w-6xl w-full z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 w-full z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
         
         {/* Left Side: Contact Info */}
         <div className="lg:col-span-5 text-left">
@@ -127,20 +157,22 @@ export default function Contact() {
           </p>
 
           {/* Social Quick Links */}
-          <div className="flex flex-col gap-3 max-w-sm">
+          <div className="flex flex-wrap gap-3 mt-4 max-w-sm">
             {socials.map((social) => {
               const IconComponent = social.icon;
               return (
-                <Magnet key={social.name} range={20} strength={0.2}>
+                <Magnet key={social.name} range={15} strength={0.25}>
                   <a
                     href={social.href}
                     target="_blank"
                     rel="noreferrer"
-                    className={`flex items-center gap-4 px-6 py-4 rounded-2xl border border-slate-200 text-slate-700 hover:text-slate-950 bg-white hover:bg-slate-50/50 shadow-sm shadow-slate-100 transition-all duration-300 w-[260px] cursor-none ${social.color}`}
+                    className={`group/social flex items-center justify-start w-14 hover:w-[160px] h-14 rounded-2xl border border-slate-200 text-slate-700 hover:text-slate-950 bg-white hover:bg-slate-50/50 shadow-sm shadow-slate-100 transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] overflow-hidden cursor-none ${social.color}`}
                     data-cursor="link"
                   >
-                    <IconComponent size={18} />
-                    <span className="font-mono text-xs font-semibold tracking-wider uppercase">
+                    <div className="flex items-center justify-center min-w-[54px] h-full">
+                      <IconComponent size={20} />
+                    </div>
+                    <span className="font-mono text-[10px] font-bold tracking-widest uppercase opacity-0 translate-x-2 group-hover/social:opacity-100 group-hover/social:translate-x-0 transition-all duration-500 delay-75 whitespace-nowrap">
                       {social.name}
                     </span>
                   </a>

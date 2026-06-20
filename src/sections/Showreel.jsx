@@ -136,7 +136,7 @@ export default function Showreel() {
     <section
       id="showreel"
       ref={containerRef}
-      className="relative py-24 md:py-32 bg-white flex flex-col justify-center items-center"
+      className="relative pt-6 pb-20 md:pt-8 md:pb-24 bg-white flex flex-col justify-center items-center overflow-hidden"
     >
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-green-500/5 rounded-full filter blur-[150px] pointer-events-none" />
 
@@ -280,32 +280,32 @@ export default function Showreel() {
                         <div className="group/controls flex items-center gap-2">
                           <button
                             onClick={toggleMute}
-                            className="flex items-center gap-2 px-3 py-2 rounded-full
+                            className="flex items-center justify-center p-2 md:px-3 md:py-2 rounded-full
                                       bg-black/60 backdrop-blur-md border border-white/15 text-white
                                       hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer pointer-events-auto"
                           >
                             {isMuted
-                              ? <><VolumeX size={15} /><span className="font-mono text-[10px] tracking-widest uppercase">Muted</span></>
-                              : <><Volume2 size={15} /><span className="font-mono text-[10px] tracking-widest uppercase">Audio On</span></>
+                              ? <><VolumeX size={15} /><span className="hidden md:inline font-mono text-[10px] tracking-widest uppercase ml-1.5">Muted</span></>
+                              : <><Volume2 size={15} /><span className="hidden md:inline font-mono text-[10px] tracking-widest uppercase ml-1.5">Audio On</span></>
                             }
                           </button>
 
                           <button
                             onClick={handleFullscreen}
                             title="Fullscreen"
-                            className="flex items-center gap-2 px-3 py-2 rounded-full
+                            className="flex items-center justify-center p-2 md:px-3 md:py-2 rounded-full
                                       bg-black/60 backdrop-blur-md border border-white/15 text-white
                                       hover:bg-green-600 hover:border-green-600 transition-all duration-200 cursor-pointer pointer-events-auto"
                           >
                             <Maximize2 size={15} />
-                            <span className="font-mono text-[10px] tracking-widest uppercase">Full</span>
+                            <span className="hidden md:inline font-mono text-[10px] tracking-widest uppercase ml-1.5">Full</span>
                           </button>
                         </div>
                       </div>
                       
                       {/* Video indicator dots */}
                       {VIDEOS.length > 1 && (
-                        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex gap-2 pointer-events-auto">
+                        <div className="hidden md:flex absolute bottom-5 left-1/2 -translate-x-1/2 z-20 gap-2 pointer-events-auto">
                           {VIDEOS.map((_, idx) => (
                             <button
                               key={idx}

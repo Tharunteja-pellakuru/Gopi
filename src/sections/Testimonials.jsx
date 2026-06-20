@@ -45,12 +45,12 @@ export default function Testimonials() {
   return (
     <section 
       id="testimonials" 
-      className="relative py-24 px-6 md:px-12 bg-white flex justify-center items-center overflow-hidden select-none"
+      className="relative py-24 bg-white flex justify-center items-center overflow-hidden select-none"
     >
       {/* Background glow spot */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-green-500/5 rounded-full filter blur-[150px] pointer-events-none" />
 
-      <div className="max-w-7xl w-full z-10">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 w-full z-10">
         
         {/* Header */}
         <div className="text-center mb-16">

@@ -30,15 +30,15 @@ export default function TimelineProgress() {
     <div className="fixed top-0 left-0 w-full h-[6px] bg-slate-100 z-[999] border-b border-slate-200/60 overflow-visible select-none">
       {/* Scroll indicator bar */}
       <div 
-        className="h-full bg-gradient-to-r from-green-600 via-emerald-600 to-green-500 relative transition-all duration-75 ease-out"
+        className="h-full bg-gradient-to-r from-[#fc6f03] via-[#ffa160] to-[#fc6f03] relative"
         style={{ width: `${scrollPercent}%` }}
       >
         {/* Playhead indicator dot */}
-        <div className="absolute right-0 top-0 w-[2px] h-3 bg-green-500 shadow-[0_0_8px_rgba(22,163,74,0.4)]" />
+        <div className="absolute right-0 top-0 w-[2px] h-3 bg-[#fc6f03] shadow-[0_0_8px_rgba(252,111,3,0.4)]" />
       </div>
 
       {/* Floating Timecode display */}
-      <div className="absolute top-[8px] right-4 bg-white/95 border border-slate-200/80 text-[10px] px-2.5 py-0.5 rounded-full font-mono text-green-600 font-semibold tracking-widest pointer-events-none shadow-sm backdrop-blur-sm">
+      <div className="absolute top-[8px] right-4 bg-white/95 border border-slate-200/80 text-[10px] px-2.5 py-0.5 rounded-full font-mono text-[#fc6f03] font-semibold tracking-widest pointer-events-none shadow-sm backdrop-blur-sm">
         {timecode}
       </div>
     </div>
