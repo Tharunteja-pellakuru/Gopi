@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 
-import Portfolio from "../assets/Videos/Portfolio.mp4"
+import Portfolio from "../assets/videos/Portfolio.mp4"
 
 const projects = [
   {
