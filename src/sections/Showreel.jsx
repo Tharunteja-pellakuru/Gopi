@@ -21,6 +21,15 @@ export default function Showreel() {
   const [isPlaying,   setIsPlaying]   = useState(false);
 
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(orientation: portrait)");
+    const handleChange = (e) => setIsPortrait(e.matches);
+    setIsPortrait(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   // Use IntersectionObserver to trigger the expansion without scroll-linking
   useEffect(() => {
@@ -34,9 +43,13 @@ export default function Showreel() {
   }, []);
 
   const width = isExpanded ? "95vw" : "85%";
-  const height = isExpanded ? "92vh" : "48vw";
+  const height = isExpanded 
+    ? (isPortrait ? "53.4vw" : "92vh") 
+    : "48vw";
   const maxWidth = isExpanded ? "95vw" : "1024px";
-  const maxHeight = isExpanded ? "92vh" : "576px";
+  const maxHeight = isExpanded 
+    ? (isPortrait ? "53.4vw" : "92vh") 
+    : "576px";
   
   const textOpacity = 1;
   const textY = 0;
